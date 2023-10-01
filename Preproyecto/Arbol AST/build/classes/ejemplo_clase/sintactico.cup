@@ -1,0 +1,239 @@
+package ejemplo_clase;
+
+
+import java_cup.runtime.Symbol;
+import java.util.ArrayList;
+import java.util.List;
+
+
+parser code
+{:
+        public List<String> datos = new ArrayList<String>();
+        public int x;
+        public int y;
+
+    @Override
+    public void syntax_error(Symbol s){
+        System.out.println(s  +" Linea "+s.left+1 +"  Columna "+s.right   +" "+ (String)s.value);
+    }
+
+    @Override
+    public void unrecovered_syntax_error(Symbol s){
+        System.out.println(s);
+    }
+:}
+
+action code
+{:
+	public double resultado=0;
+        plot_tree load = new plot_tree();
+        String rama="";
+        int tkn=0;
+        String izq="",der="";
+:}
+
+
+terminal String PCOMA, COMA,CADENA,ENTERO,IGUAL,MAS,MENOS,POR, DIV,TXTCOMILLA,INT,STRING;
+
+non terminal inicios;
+non terminal listaid,op,asignar,val,E,T,H,tipo;
+
+
+start with inicios;
+
+inicios ::= inicios tipo:tipo listaid:lista PCOMA
+    {:  
+        tkn++;
+        String pts="\"gramatica\" -> \""+Integer.toString(tkn)+"_asignacion\";\n";
+        pts+="\""+Integer.toString(tkn)+"_asignacion\" -> "+tipo+";\n";
+        pts+="\""+Integer.toString(tkn)+"_asignacion\" -> "+lista+";\n";
+        System.out.println(pts);
+        load.agregarNodo(pts);
+    :}
+    |tipo:tipo listaid:lista PCOMA
+    {:
+        tkn++;
+        String pts="\"gramatica\" -> \""+Integer.toString(tkn)+"_asignacion\";\n";
+        pts+="\""+Integer.toString(tkn)+"_asignacion\" -> "+tipo+";\n";
+        pts+="\""+Integer.toString(tkn)+"_asignacion\" -> "+lista+";\n";
+        System.out.println(pts);
+        load.agregarNodo(pts);
+    :};
+
+tipo::=INT{:
+        tkn++;
+        String tipo ="\""+Integer.toString(tkn)+"_TIPO\"";
+        RESULT=tipo;
+        tkn++;
+        System.out.println(tipo+"->\""+Integer.toString(tkn)+"_int\";\n");
+        
+    :}
+    |STRING{:
+        tkn++;
+        String tipo ="\""+Integer.toString(tkn)+"_TIPO\"";
+        RESULT=tipo;
+        tkn++;
+        System.out.println(tipo+"->\""+Integer.toString(tkn)+"_String\";\n");
+    :};
+
+listaid::= listaid:v1 COMA val:val
+    {:
+        tkn++;
+        String LISTA_R="\""+Integer.toString(tkn)+"_LISTA\"";
+        tkn++;
+        String COMA_R="\""+Integer.toString(tkn)+"_COMA\"";
+        tkn++;
+        String VALOR_R="\""+Integer.toString(tkn)+"_VALOR\"";
+
+        System.out.println(LISTA_R+"->"+v1+";\n");
+        System.out.println(LISTA_R+"->"+COMA_R+";\n");
+        System.out.println(LISTA_R+"->"+VALOR_R+";\n");
+        System.out.println(VALOR_R+"->"+val+";\n");
+        RESULT=LISTA_R;
+    :}
+    |val:val
+    {:
+
+        tkn++;
+        String LISTA_R="\""+Integer.toString(tkn)+"_LISTA\"";
+        tkn++;
+        String VALOR_R="\""+Integer.toString(tkn)+"_VALOR\"";
+        System.out.println(LISTA_R+"->"+VALOR_R+";");
+        System.out.println(VALOR_R+"->"+val+";\n");
+        
+        RESULT=LISTA_R;
+    :}
+    ;
+
+val::=CADENA:ca IGUAL op:operacion{:
+        tkn++;
+        String CADENA="\""+Integer.toString(tkn)+"_CADENA\"";
+        tkn++;
+        String resCAD="\""+Integer.toString(tkn)+"_"+ca+"\"";
+        tkn++;
+        String IGUAL_C="\""+Integer.toString(tkn)+"_=\"";
+        RESULT=CADENA;
+        
+        System.out.println(CADENA+"->"+resCAD+";");
+        System.out.println(CADENA+"->"+IGUAL_C+";");
+        System.out.println(CADENA+"->"+operacion+";");
+    :}
+    |CADENA:ca{:
+        tkn++;
+        String CADENA="\""+Integer.toString(tkn)+"_CADENA\"";
+        tkn++;
+        String resCAD="\""+Integer.toString(tkn+1)+"_"+ca+"\"";
+        RESULT=CADENA;
+        System.out.println(CADENA+"->"+resCAD+";");
+    :};
+    
+
+op::=  E:n1 {: 
+        tkn++;
+        String CADENA="\""+Integer.toString(tkn)+"_E\"";
+        String res = CADENA+"->"+n1+";\n";
+        System.out.println(res);
+        RESULT = CADENA;
+:} ;
+
+E::= E:n1 MAS T:n2 {: 
+        tkn++;
+        String cad="";
+
+        String MAIN_T="\""+Integer.toString(tkn)+"_E\"";
+        tkn++;
+        String T_N="\""+Integer.toString(tkn)+"_E\"";
+        cad+=MAIN_T+"->"+T_N+";\n";       
+        cad+=T_N+"->"+n1+";\n";   
+        tkn++;
+        cad+=MAIN_T+"->"+"\""+Integer.toString(tkn)+"_+\";\n";
+        tkn++;
+        T_N="\""+Integer.toString(tkn)+"_T\"";
+        cad+=MAIN_T+"->"+T_N+";\n";      
+        cad+=T_N+"->"+n2+";\n";                 
+        System.out.println(cad);
+        RESULT = MAIN_T;
+        //RESULT=Double.parseDouble(n1.toString())+Double.parseDouble(n2.toString());
+    :}
+    |E:n1 MENOS T:n2 {:
+        tkn++;
+        String cad="";
+
+        String MAIN_T="\""+Integer.toString(tkn)+"_E\"";
+        tkn++;
+        String T_N="\""+Integer.toString(tkn)+"_E\"";
+        cad+=MAIN_T+"->"+T_N+";\n";       
+        cad+=T_N+"->"+n1+";\n";   
+        tkn++;
+        cad+=MAIN_T+"->"+"\""+Integer.toString(tkn)+"_-\";\n";
+        tkn++;
+        T_N="\""+Integer.toString(tkn)+"_T\"";
+        cad+=MAIN_T+"->"+T_N+";\n";      
+        cad+=T_N+"->"+n2+";\n";                 
+        System.out.println(cad);
+        RESULT = MAIN_T;
+        //RESULT=Double.parseDouble(n1.toString())-Double.parseDouble(n2.toString());
+    :}
+    |T:n1
+    {:  
+        tkn++;
+        String CADENA="\""+Integer.toString(tkn)+"_T\"";
+        String res = CADENA+"->"+n1+";";
+        System.out.println(res);
+        RESULT = CADENA;
+    :};
+
+T::= T:n1 POR H:n2 {: 
+        tkn++;
+        String cad="";
+
+        String MAIN_T="\""+Integer.toString(tkn)+"_T\"";
+        tkn++;
+        String T_N="\""+Integer.toString(tkn)+"_T\"";
+        cad+=MAIN_T+"->"+T_N+";\n";       
+        cad+=T_N+"->"+n1+";\n";   
+        tkn++;
+        cad+=MAIN_T+"->"+"\""+Integer.toString(tkn)+"_*\";\n";
+        tkn++;
+        T_N="\""+Integer.toString(tkn)+"_H\"";
+        cad+=MAIN_T+"->"+T_N+";\n";      
+        cad+=T_N+"->"+n2+";\n";                 
+        System.out.println(cad);
+        RESULT = MAIN_T;
+        //RESULT=Double.parseDouble(n1.toString())*Double.parseDouble(n2.toString());
+    :}
+    |T:n1 DIV H:n2 {:
+        tkn++;
+        String cad="";
+
+        String MAIN_T="\""+Integer.toString(tkn)+"_T\"";
+        tkn++;
+        String T_N="\""+Integer.toString(tkn)+"_T\"";
+        cad+=MAIN_T+"->"+T_N+";\n";       
+        cad+=T_N+"->"+n1+";\n";   
+        tkn++;
+        cad+=MAIN_T+"->"+"\""+Integer.toString(tkn)+"_/\";\n";
+        tkn++;
+        T_N="\""+Integer.toString(tkn)+"_H\"";
+        cad+=MAIN_T+"->"+T_N+";\n";      
+        cad+=T_N+"->"+n2+";\n";                 
+        System.out.println(cad);
+        RESULT = MAIN_T;
+        //RESULT=Double.parseDouble(n1.toString())/Double.parseDouble(n2.toString());
+        
+    :}
+    |H:n1 {:  
+        tkn++;
+        String CADENA="\""+Integer.toString(tkn)+"_H\"";
+        String res = CADENA+"->\""+n1+"\";\n";
+        System.out.println(res);
+        RESULT = CADENA;
+    :};
+
+H::= ENTERO:valor {:
+        tkn++;
+        RESULT =valor;
+    :}
+    |TXTCOMILLA:valor{:
+        RESULT =valor;
+    :};
